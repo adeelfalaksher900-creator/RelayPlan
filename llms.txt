@@ -1,0 +1,15 @@
+# RelayPlan
+
+> A private TypeScript relief allocation simulator. Optimize the worst demand coverage, compare a greedy heuristic, preview direct-route closures and export reproducible scenario and allocation files.
+
+Synthetic tabletop model. No real-time road safety, vehicle scheduling or measured field impact. No backend accounts or scenario database.
+
+## Getting started
+
+- [README](./README.md): Setup, demo exercise, tests, architecture and contributing.
+
+## Model and evidence
+
+- [Algorithm](./docs/ALGORITHM.md): Integer constraints and exact three-level allocation objective.
+- [Research](./docs/RESEARCH.md): Problem grounding, established research, alternatives and impact plan.
+- [Security](./docs/SECURITY.md): Local trust boundaries, bounded imports and actual review limits.
