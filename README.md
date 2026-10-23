@@ -1,52 +1,42 @@
 # RelayPlan
 
-Every community counts. RelayPlan is a private, browser-based relief allocation simulator for community volunteers, students, and planning exercises.
+**Every community counts.** A browser-based relief allocation simulator that makes the trade-off between coverage and transport effort inspectable.
 
-**Live demo:** https://relayplan-eurekadev.vercel.app/
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
+![MIT](https://img.shields.io/badge/License-MIT-2563EB)
 
-**Website walkthrough:** https://relayplan-eurekadev.vercel.app/demo.html
+[Open RelayPlan](https://relayplan-eurekadev.vercel.app/) · [Walkthrough](https://relayplan-eurekadev.vercel.app/demo.html) · [Algorithm](docs/ALGORITHM.md) · [Research](docs/RESEARCH.md) · [Security](docs/SECURITY.md)
 
-Built as a new project on 13 October 2026 for EurekaDev 2026, Coding Track, Problem in the Community. MIT licensed. Created for Adeel Falak Sher and Raouf Khalid's team. Do not infer field deployment, volunteer testing or operational approval from this prototype.
+When stock is insufficient, delivering along the shortest routes first can leave a distant community without any allocation. RelayPlan lets community volunteers and students compare explicit allocation objectives, inspect unmet need, preview a route closure, and export a reproducible scenario.
 
-## The problem
+Created on 13 October 2026 for Adeel Falak Sher and Raouf Khalid's EurekaDev 2026 team, Coding Track, **Problem in the Community**. This is a tabletop planning prototype, without field deployment, volunteer testing or operational approval.
 
-When supply is insufficient, filling the shortest routes first can leave a distant community without any allocation. Improving total deliveries alone does not tell us who is being left behind. A transparent exercise should show unmet need, transport effort, and how a closure changes the feasible plan.
+## The workflow
 
-RelayPlan makes those decisions inspectable without an account, server-side scenario storage, AI API, or paid service.
+| Explore | Compare | Reproduce |
+| --- | --- | --- |
+| Edit depot stock, community demand and route capacities | Inspect coverage, delivery and transport effort | Export allocation audit, CSV or scenario JSON |
+| See disconnected and zero-demand communities | Compare against a labeled nearest-first heuristic | Import the scenario to repeat the exercise |
+| Preview a closure without changing the scenario | Apply a closure only after reviewing the preview | Reset the fictional exercise |
 
-## Try it in two minutes
+The default River district exercise has 180 kits and 300 kits of demand. RelayPlan allocates **42, 36, 54 and 48 kits**, giving every community 60% coverage. The simple nearest-first comparator delivers the same 180 kits but leaves Orchard at zero. It is a pedagogical heuristic, not an optimal efficiency baseline.
 
-1. Open the demo. The fictional River district exercise has 180 available kits and 300 kits of demand.
-2. Inspect the allocation planner: 42, 36, 54 and 48 kits. Each community receives 60% of its demand.
-3. Open **Compare strategies**. The nearest-first heuristic delivers the same 180 kits but gives Orchard zero kits. Its lowest community coverage is 0%. It is deliberately a simple, clearly labeled heuristic, not an optimal efficiency baseline.
-4. Inspect the cost trade-off: 3,320 kit-minutes for nearest-first versus 4,524 for RelayPlan. Kit-minutes are allocation multiplied by route minutes, not fleet travel time.
-5. Open **Stress test**. Closing South depot → Orchard reduces the coverage floor to 25%. The preview does not mutate the scenario until **Apply closure**.
-6. Edit stock, demand, route capacity and minutes. The solver recalculates immediately. **Reset demo** restores the original exercise.
-7. Export an allocation audit, CSV, or reusable scenario JSON. Import the scenario JSON to reproduce the exercise.
-
-All example communities, capacities, supply and demand are synthetic. The schematic is not a geographic map. No personal household records are required.
-
-## Features
-
-- Capacity-aware allocation, with blocked routes excluded.
-- Exact worst-coverage objective, followed by maximum delivery and minimum transport effort.
-- Side-by-side baseline comparison and an exact allocation audit.
-- Non-mutating route-closure previews.
-- Validated JSON import and local JSON/CSV export.
-- Explicit disconnected-community and zero-demand handling.
-- Responsive layout, labeled inputs, keyboard dialog navigation and reduced-motion support.
-- Source-grounded method and model-limit explanations inside the app.
+The exercise's transport effort is 4,524 kit-minutes for RelayPlan versus 3,320 for nearest-first. Kit-minutes mean kits multiplied by route minutes; they are not fleet travel time. Closing South depot → Orchard lowers the optimum coverage floor to 25%. All communities, capacities and figures in the exercise are synthetic; the schematic is not a geographic map.
 
 ## Run locally
 
-Use Node.js 22 or 24 and npm.
+Use Node.js 24.12 or newer and npm.
 
 ```sh
+git clone https://github.com/adeelfalaksher900-creator/RelayPlan.git
+cd RelayPlan
 npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-Open the URL printed by Vite. For verification and a production build:
+Open the URL printed by Vite.
 
 ```sh
 npm test
@@ -54,74 +44,76 @@ npm run build
 npm run preview -- --host 127.0.0.1
 ```
 
-No `.env`, database, authentication provider, API key, billing account or migration is needed. Rendered video assets are distributed separately and are not required to run the app.
-
-## How the solver works
-
-Each depot has a whole-kit supply. Each community has a whole-kit demand. Each independent direct route has a whole-kit capacity, estimated minutes and a blocked flag.
-
-The objective is ordered:
-
-1. Maximize the minimum allocated/demand fraction across all positive-demand communities.
-2. Preserve that floor while maximizing total delivered kits.
-3. Minimize the sum of allocated kits × route minutes among those plans.
-
-The optimum worst-coverage value belongs to the finite candidate set `k / communityDemand`. Binary search checks exact feasibility via flow with required community targets. A successive shortest augmenting-path solver then maximizes delivery and minimizes cost, using residual reverse edges to reroute previous decisions. Mandatory coverage has a dominating reward greater than every possible transport saving.
-
-This is **worst-coverage floor optimization**, not full lexicographic max-min fairness across the entire ordered vector of community coverages. If one community is unreachable, the floor remains zero; that community is not silently excluded. Zero-demand communities do not constrain the floor.
-
-See [algorithm and assumptions](docs/ALGORITHM.md), [research](docs/RESEARCH.md) and [security scope](docs/SECURITY.md).
-
-## Validation
-
-The test suite compares all three objective values against independent exhaustive enumeration of every feasible allocation in 200 seeded small networks and 100 irregular networks. Additional tests cover the default exercise, route closure, zero supply, disconnected and zero-demand communities, malformed imports, and CSV formula escaping.
-
-This verifies the implementation within its bounded model. It does not establish real-world fairness, route safety or humanitarian effectiveness. No external user study has been conducted.
-
-## Scope and limits
-
-- One homogeneous type of whole kit, one allocation round.
-- Independent depot-to-community routes. Shared road bottlenecks are not represented.
-- No truck scheduling, vehicle constraints, delivery deadlines, uncertain demand, medical triage or live road safety information.
-- Up to 4 depots, 8 communities, 32 routes; stock, demand and capacity 0–500; estimated route minutes 0–180.
-- The app does not persist scenarios after refresh unless you export them.
-- Static delivery still exposes normal web request metadata to the hosting provider. Scenario content stays in the browser.
-
-Use for learning and tabletop planning exercises. A real operation needs expert review and a richer, validated model.
+No `.env`, database, authentication service, API key or migration is needed. Vercel serves `dist/` using `vercel.json`. Rendered video assets are distributed separately and are not needed to run the app.
 
 ## Architecture
 
-React 19 + TypeScript + Vite + Tailwind CSS. Lucide supplies icons. The pure TypeScript solver runs locally, without network requests or telemetry. Vercel serves static assets and security headers. No Cloudflare data store, tenant data, server API or row-level authorization is present.
-
+```mermaid
+flowchart TD
+  S["Stock, demand and route scenario"] --> V["Bounded input validation"]
+  V --> E["Local TypeScript flow solver"]
+  V --> B["Nearest-first comparator"]
+  V --> C["Non-mutating closure preview"]
+  C --> E
+  E --> R["Coverage, allocations and effort"]
+  B --> R
+  R --> X["Audit, CSV and scenario export"]
 ```
-src/engine.ts       Types, validation, flow solver, baseline, exports
-src/App.tsx         Planner, comparison, stress test, method screens
-src/main.tsx        Browser entry point
-src/index.css      Responsive design and semantic palette
-tests/engine.test.ts Independent oracle and boundary cases
-docs/              Research, assumptions, security, submission notes
-video/             Editable video sources, script, timing data and media
-public/            App favicon and machine-readable documentation
-```
 
-## Contribute
+React 19, TypeScript, Vite and Tailwind CSS provide the interface; Lucide supplies icons. The pure TypeScript solver runs in the browser. Scenario content does not go to a server. Static hosting still receives ordinary web-request metadata.
 
-See [video reproduction](video/README.md) for the 1080p composition, narration and captions, and [judging evidence](docs/JUDGING.md) for the submission's reviewable claims.
+## Solver objectives
 
-Open an issue describing the problem, expected behavior and a small reproducible scenario. For code changes, create a branch, add a focused test for solver or import changes, run `npm test` and `npm run build`, then open a pull request explaining the result and limits.
+The solver applies three objectives in order:
 
-Useful directions: a richer route network, uncertainty intervals, multiple kit types, volunteer usability studies, localized copy and clearer scenario editing. Do not add demographic priority weights without discussing the ethics and model behavior first. Do not upload personal beneficiary records or secrets.
+1. Maximize the minimum received/demand fraction across positive-demand communities.
+2. Preserve that floor while maximizing total kits delivered.
+3. Minimize allocated kits × route minutes among those plans.
 
-## Research and originality
+The candidate floor values are finite fractions `k / communityDemand`. Flow feasibility checks determine the achievable floor; a successive shortest augmenting-path solver then maximizes delivery and minimizes cost, with reverse residual edges allowing earlier choices to change. Mandatory coverage uses a dominating reward greater than every possible transport saving.
 
-Fair allocation and humanitarian logistics are established research areas. RelayPlan's original contribution is the small, private workflow connecting explicit objectives, baseline comparison, closure simulation and reproducible export. We do not claim a new research algorithm or measured field impact.
+This optimizes the **worst-coverage floor**, not the entire lexicographically ordered coverage vector. An unreachable positive-demand community keeps the floor at zero rather than being silently excluded. Zero-demand communities do not constrain it. See [the algorithm](docs/ALGORITHM.md) for the derivation and assumptions.
 
-- [World Bank Pakistan floods assessment, 2022](https://www.worldbank.org/en/news/press-release/2022/10/28/pakistan-flood-damages-and-economic-losses-over-usd-30-billion-and-reconstruction-needs-over-usd-16-billion-new-assessme): context, including 33 million people affected.
-- [Models for relief routing: Equity, efficiency and efficacy](https://www.sciencedirect.com/science/article/pii/S1366554511000639): the objective trade-off.
-- [Equitable last mile distribution in emergency response](https://www.sciencedirect.com/science/article/pii/S0360835218305655): fairness in relief allocation.
+## Verification
 
-The demo values are illustrative, not extracted from those sources. Research informed the model choices, not fabricated operational data.
+The repository's test suite compares the three objectives with independent exhaustive enumeration on seeded small networks and irregular networks. It also covers the default exercise, route closures, zero supply, disconnected communities, malformed imports and CSV formula escaping. Run `npm test` to reproduce the current checks.
 
-## License and credits
+These checks evaluate the bounded implementation. They do not demonstrate real-world fairness, route safety or humanitarian effectiveness. No external user study has been conducted.
 
-MIT, see [LICENSE](LICENSE). Dependency licenses remain with their respective projects. AI assistance was used throughout development and narration; the implementation is accompanied by executable tests and explicit scope limits. The video renders the actual app interface with deterministic inputs, scrolling and a pointer. Narration uses ElevenLabs’ stock Mark voice; it is not a recording of a team member.
+## Model boundaries
+
+- One homogeneous type of whole kit and one allocation round.
+- Independent direct routes; shared road bottlenecks are not represented.
+- Up to 4 depots, 8 communities and 32 routes, with bounded stock, demand, capacity and minutes.
+- No truck scheduling, vehicle constraints, deadlines, uncertain demand, medical triage or live route-safety information.
+- Scenarios are not retained after refresh unless exported.
+
+Use this for learning and planning exercises. Real operations require expert review and a richer validated model.
+
+## Project map
+
+| Path | Purpose |
+| --- | --- |
+| `src/engine.ts` | Types, validation, flow solver, comparator and exports |
+| `src/App.tsx` | Planner, comparison, closure test and method screens |
+| `src/index.css` | Responsive interface and semantic palette |
+| `tests/` | Independent oracle and boundary tests |
+| `docs/` | Research, assumptions, security and judging evidence |
+| `video/` | Editable composition, timing and narration sources |
+| `public/` | Favicon and machine-readable documentation |
+
+## Contributing
+
+Open an issue with expected behavior and a small reproducible scenario. Create a branch, add a focused test for solver/import changes, run `npm test` and `npm run build`, then open a pull request. Do not upload beneficiary records or secrets.
+
+Potential extensions include uncertainty intervals, multiple kit types, richer route networks, localization and volunteer usability studies. Demographic priority weights need explicit discussion of model behavior and ethics. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Research and license
+
+Fair allocation and humanitarian logistics are established fields. RelayPlan's contribution is the workflow connecting explicit objectives, comparison, closure simulation and portable evidence; it does not claim a new research algorithm or measured field impact.
+
+- [World Bank: Pakistan floods assessment](https://www.worldbank.org/en/news/press-release/2022/10/28/pakistan-flood-damages-and-economic-losses-over-usd-30-billion-and-reconstruction-needs-over-usd-16-billion-new-assessme)
+- [Models for relief routing: Equity, efficiency and efficacy](https://www.sciencedirect.com/science/article/pii/S1366554511000639)
+- [Equitable last mile distribution in emergency response](https://www.sciencedirect.com/science/article/pii/S0360835218305655)
+
+[MIT](LICENSE). Dependencies retain their own licenses. AI assistance was used in development and narration; [video reproduction](video/README.md) records the media workflow. The stock narration is not a team-member recording.
